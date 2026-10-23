@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FRACTIO - Interactive Fraction Learning Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#8B5CF6; --purple-d:#6D28D9; --purple-l:#F3E8FF;
+  --pink:#EC4899; --pink-d:#BE185D; --pink-l:#FDF2F8;
+  --orange:#FF9F43; --orange-d:#D9770A;
+  --teal:#20BF9D; --teal-d:#0E8C6F; --teal-l:#E3FBF5;
+  --bg1:#FFFFFF; --bg2:#FBEAFA; --bg:#FBF6FF; --card:#FFFFFF; --ink:#3B1E5E; --sub:#8B7AA8; --err:#FF5C6C;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#1D1233; --bg2:#2B1A3E; --bg:#241736; --card:#2A1D45; --ink:#F3EAFF; --sub:#C3AEDD; --purple-l:#3A2A5C; --pink-l:#3E2438; --teal-l:#183E38; }
+}
+:root[data-theme="dark"]{ --bg1:#1D1233; --bg2:#2B1A3E; --bg:#241736; --card:#2A1D45; --ink:#F3EAFF; --sub:#C3AEDD; --purple-l:#3A2A5C; --pink-l:#3E2438; --teal-l:#183E38; }
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0; font-family:'Nunito',sans-serif; background:linear-gradient(165deg, var(--bg1), var(--bg2)); background-attachment:fixed; color:var(--ink); padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); min-height:100%;}
+h1,h2,h3{font-family:'Poppins',sans-serif; margin:0 0 .4em; font-weight:700;}
+.wrap{max-width:640px; margin:0 auto; padding:.9rem 1.1rem 3rem;}
+header.top{position:sticky; top:env(safe-area-inset-top,0px); background:var(--card); box-shadow:0 2px 10px rgba(139,92,246,.07); z-index:5; padding:.7rem 1rem .5rem; margin:0 -1rem .8rem; border-radius:0 0 16px 16px;}
+.brandbar{display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem;}
+.logo{width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-family:'Poppins',sans-serif;}
+.brandbar b{font-family:'Poppins',sans-serif; font-size:1.1rem;}
+.progress{display:flex; gap:4px;}
+.progress span{flex:1; height:6px; border-radius:4px; background:var(--purple-l); transition:background .3s;}
+.progress span.done{background:linear-gradient(90deg,var(--purple),var(--pink));}
+.progress span.now{background:var(--pink);}
+.steplabel{font-size:.78rem; color:var(--sub); margin-top:.35rem; font-weight:600;}
+.card{background:var(--card); border-radius:var(--r); padding:1.25rem 1.15rem; margin-bottom:1rem; box-shadow:0 4px 18px rgba(139,92,246,.1); animation:rise .35s ease;}
+@keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.btn{display:inline-block; border:none; border-radius:14px; padding:.75rem 1.4rem; font-family:'Poppins',sans-serif; font-weight:600; font-size:.95rem; cursor:pointer; color:#fff; background:linear-gradient(135deg,var(--purple),var(--pink)); box-shadow:0 6px 16px rgba(139,92,246,.35); transition:transform .12s;}
+.btn:active{transform:scale(.97);}
+.btn.secondary{background:transparent; color:var(--purple); border:2px solid var(--purple); box-shadow:none;}
+.btn.block{display:block; width:100%; text-align:center;}
+.btn:disabled{opacity:.45; cursor:default; box-shadow:none;}
+.navrow{display:flex; justify-content:space-between; gap:.6rem; margin-top:1rem;}
+.badge{display:inline-flex; align-items:center; gap:.3rem; background:var(--purple-l); color:var(--purple-d); font-size:.72rem; font-weight:700; letter-spacing:.02em; padding:.28rem .7rem; border-radius:20px; margin-bottom:.6rem; text-transform:uppercase;}
+.opt{display:block; width:100%; text-align:left; background:var(--bg); border:2px solid transparent; border-radius:14px; padding:.7rem .95rem; margin-bottom:.55rem; font-family:'Nunito',sans-serif; font-weight:700; font-size:.95rem; color:var(--ink); cursor:pointer; transition:.15s;}
+.opt:hover{border-color:var(--purple-l);}
+.opt.correct{border-color:var(--teal); background:var(--teal-l); animation:pop .3s;}
+.opt.wrong{border-color:var(--err); background:rgba(255,92,108,.1);}
+@keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.03);}100%{transform:scale(1);}}
+.feedback{margin-top:.5rem; font-weight:700; font-size:.88rem; display:flex; align-items:center; gap:.35rem;}
+.feedback.ok{color:var(--teal-d);}
+.feedback.err{color:var(--err);}
+.fraction{font-size:1.7rem; font-weight:800; text-align:center; margin:.4rem 0; font-family:'Poppins',sans-serif; color:var(--purple-d);}
+.frow{display:flex; gap:.4rem; justify-content:center; margin:.7rem 0; flex-wrap:wrap;}
+.frow button{min-width:46px; height:38px; padding:0 .5rem; border-radius:10px; border:2px solid var(--purple); background:transparent; color:var(--purple); font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif;}
+.frow button.sel{background:var(--purple); color:#fff;}
+.tabs{display:flex; gap:.4rem; margin-bottom:.9rem; flex-wrap:wrap;}
+.tabs button{flex:1; min-width:80px; border:none; background:var(--purple-l); color:var(--purple-d); font-family:'Poppins',sans-serif; font-weight:600; font-size:.78rem; padding:.55rem .4rem; border-radius:12px; cursor:pointer;}
+.tabs button.act{background:var(--purple); color:#fff;}
+table.dash{width:100%; border-collapse:collapse; font-size:.85rem;}
+table.dash th,table.dash td{padding:.55rem .4rem; border-bottom:1px solid var(--purple-l); text-align:center;}
+table.dash th{color:var(--sub); font-weight:700; font-size:.72rem; text-transform:uppercase;}
+.stat{display:flex; gap:.6rem; margin-bottom:.9rem;}
+.stat div{flex:1; background:var(--purple-l); border-radius:14px; padding:.7rem .5rem; text-align:center;}
+.stat b{display:block; font-size:1.25rem; font-family:'Poppins',sans-serif; color:var(--purple-d);}
+.stat span{font-size:.68rem; color:var(--sub); font-weight:600;}
+textarea{width:100%; border-radius:12px; border:2px solid var(--purple-l); padding:.65rem; font-family:'Nunito',sans-serif; font-size:.9rem; background:var(--bg); color:var(--ink); resize:vertical; min-height:56px;}
+.bar{height:12px; border-radius:6px; background:var(--purple-l); overflow:hidden; margin-top:.3rem;}
+.bar i{display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--purple)); border-radius:6px; transition:width .4s;}
+.matchgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem;}
+.mc{background:var(--bg); border:2px solid var(--purple-l); border-radius:12px; padding:.75rem .3rem; text-align:center; font-weight:800; font-family:'Poppins',sans-serif; cursor:pointer; font-size:1.05rem;}
+.mc.sel{border-color:var(--purple); background:var(--purple-l);}
+.mc.matched{border-color:var(--teal); background:var(--teal-l); color:var(--teal-d); cursor:default;}
+.hero{position:relative; text-align:center; overflow:hidden; padding:1.6rem 1rem 1.2rem;}
+.float{position:absolute; opacity:.5; animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.pts{font-family:'Poppins',sans-serif; font-weight:700; color:var(--orange-d); font-size:.85rem;}
+.loginscreen{min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:1.2rem;}
+.logincard{max-width:380px; width:100%; text-align:center;}
+.roletabs{display:flex; gap:.4rem; margin-bottom:1rem; background:var(--purple-l); border-radius:12px; padding:.25rem;}
+.roletabs button{flex:1; border:none; background:transparent; color:var(--purple-d); font-family:'Poppins',sans-serif; font-weight:600; font-size:.85rem; padding:.55rem 0; border-radius:9px; cursor:pointer;}
+.roletabs button.act{background:var(--purple); color:#fff;}
+.field{text-align:left; margin-bottom:.8rem;}
+.field label{display:block; font-size:.78rem; font-weight:700; color:var(--sub); margin-bottom:.3rem;}
+.field input{width:100%; border:2px solid var(--purple-l); border-radius:12px; padding:.65rem .8rem; font-family:'Nunito',sans-serif; font-size:.92rem; background:var(--bg); color:var(--ink);}
+.field input:focus{outline:none; border-color:var(--purple);}
+.loginerr{color:var(--err); font-size:.8rem; font-weight:700; margin-top:-.3rem; margin-bottom:.6rem; min-height:1.1em;}
+.userchip{display:flex; align-items:center; gap:.5rem; margin-left:auto;}
+.userchip .av{width:26px; height:26px; border-radius:50%; background:var(--purple); color:#fff; font-family:'Poppins',sans-serif; font-weight:700; font-size:.75rem; display:flex; align-items:center; justify-content:center;}
+.logoutbtn{background:none; border:none; color:var(--sub); font-size:.72rem; font-weight:700; cursor:pointer; text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const STEPS = ["Beranda","Pendahuluan","Fraction Learning","Fraction Laboratory","Fraction Challenge","Quiz Master","Penutup"];
+let step = 0;
+const SUPABASE_URL = "https://nszhefguhdulfnyrxwic.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zemhlZmd1aGR1bGZueXJ4d2ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MDA4MTMsImV4cCI6MjEwNTk3NjgxM30.R2MHOxD68o7Ud4npcJsRiJKYnM-lrUQ__xEJrPDT5ZA";
+const state = { lab:2, quiz:[null,null,null], score:0, points:0, matched:0, matchSel:null, reflect:["","",""], learnTab:0,
+  loggedIn:false, role:'siswa', name:'', className:'', loginErr:'', submitted:false };
+
+function renderLogin(){
+  const app=document.getElementById('app');
+  app.innerHTML = `<div class="loginscreen"><div class="card logincard">
+    <div class="logo" style="margin:0 auto 1rem;">F</div>
+    <h2>Masuk ke FRACTIO</h2>
+    <p style="color:var(--sub); font-size:.88rem; margin-bottom:1.1rem;">Interactive Fraction Learning Adventure</p>
+    <div class="roletabs" id="roletabs"></div>
+    <div class="field"><label>Nama</label><input id="login-name" placeholder="Tulis namamu" value="${state.name}"></div>
+    <div class="field" id="login-class-wrap"><label>Kelas</label><input id="login-class" placeholder="Contoh: VII A" value="${state.className}"></div>
+    <div class="loginerr" id="login-err">${state.loginErr}</div>
+    <button class="btn block" onclick="doLogin()">Masuk</button>
+  </div></div>`;
+  const rt=document.getElementById('roletabs');
+  [["siswa","Siswa"],["guru","Guru"]].forEach(r=>{
+    const b=document.createElement('button'); b.textContent=r[1]; b.className=state.role===r[0]?'act':'';
+    b.onclick=()=>{ state.role=r[0]; renderLogin(); };
+    rt.appendChild(b);
+  });
+}
+function doLogin(){
+  const name=document.getElementById('login-name').value.trim();
+  const cls=document.getElementById('login-class').value.trim();
+  if(!name){ state.loginErr='Nama wajib diisi.'; renderLogin(); return; }
+  state.name=name; state.className=cls; state.loggedIn=true; state.loginErr='';
+  step = 0;
+  render();
+}
+function logout(){ state.loggedIn=false; state.name=''; state.submitted=false; render(); }
+
+async function submitJawaban(){
+  if(state.submitted) return;
+  state.submitted=true;
+  try{
+    await fetch(SUPABASE_URL+"/rest/v1/submissions", {
+      method:"POST",
+      headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" },
+      body: JSON.stringify({ name: state.name, class: state.className, quiz_score: Math.min(state.score,100),
+        challenge_points: state.points, reflect1: state.reflect[0], reflect2: state.reflect[1], reflect3: state.reflect[2] })
+    });
+  }catch(e){ console.error("Gagal mengirim jawaban:", e); }
+}
+
+function pizzaSVG(n, filled, size){
+  size = size||150; const R=size*0.467; const C=size/2;
+  let paths="";
+  for(let i=0;i<n;i++){
+    const a0=(i/n)*2*Math.PI-Math.PI/2, a1=((i+1)/n)*2*Math.PI-Math.PI/2;
+    const x0=C+R*Math.cos(a0), y0=C+R*Math.sin(a0), x1=C+R*Math.cos(a1), y1=C+R*Math.sin(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    const fill=i<filled?"var(--orange)":"#FFE3B8";
+    paths+=`<path d="M${C},${C} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z" fill="${fill}" stroke="var(--card)" stroke-width="2.5"/>`;
+  }
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;margin:0 auto;">${paths}</svg>`;
+}
+function pizzaSVGInteractive(n, filledSet, size, onToggle){
+  size = size||190; const R=size*0.467; const C=size/2;
+  let paths="";
+  for(let i=0;i<n;i++){
+    const a0=(i/n)*2*Math.PI-Math.PI/2, a1=((i+1)/n)*2*Math.PI-Math.PI/2;
+    const x0=C+R*Math.cos(a0), y0=C+R*Math.sin(a0), x1=C+R*Math.cos(a1), y1=C+R*Math.sin(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    const fill=filledSet.has(i)?"var(--orange)":"#FFE3B8";
+    paths+=`<path data-i="${i}" d="M${C},${C} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z" fill="${fill}" stroke="var(--card)" stroke-width="2.5" style="cursor:pointer; transition:fill .15s;"/>`;
+  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;margin:0 auto;">${paths}</svg>`;
+  wrap.querySelectorAll('path').forEach(p=>{ p.onclick=()=>onToggle(+p.dataset.i); });
+  return wrap.firstChild;
+}
+function barSVG(n, filled){
+  let cells=""; const w=280/n;
+  for(let i=0;i<n;i++){
+    cells+=`<rect x="${i*w+2}" y="4" width="${w-4}" height="40" rx="6" fill="${i<filled?'var(--teal)':'var(--purple-l)'}"/>`;
+  }
+  return `<svg viewBox="0 0 280 48" width="100%" height="48" style="max-width:280px;display:block;margin:.6rem auto;">${cells}</svg>`;
+}
+function renderProgress(){
+  document.getElementById('progress').innerHTML = STEPS.map((s,i)=>`<span class="${i<step?'done':i===step?'now':''}"></span>`).join('');
+  document.getElementById('steplabel').textContent = (step+1)+"/"+STEPS.length+" \u00b7 "+STEPS[step];
+}
+function nav(prevDisabled, nextLabel, nextFn){
+  return `<div class="navrow"><button class="btn secondary" onclick="go(${step-1})" ${prevDisabled?'disabled':''}>Kembali</button><button class="btn" onclick="(${nextFn})()">${nextLabel}</button></div>`;
+}
+function go(n){ step=n; render(); window.scrollTo(0,0); }
+function mkOpts(boxId, opts, onCorrect){
+  const box=document.getElementById(boxId);
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o[0];
+    b.onclick=()=>{
+      [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
+      b.classList.add(o[1]?'correct':'wrong');
+      let fb=box.querySelector('.feedback'); if(!fb){fb=document.createElement('div'); fb.className='feedback'; box.appendChild(fb);}
+      fb.className='feedback '+(o[1]?'ok':'err');
+      fb.textContent = o[2] || (o[1]?"Tepat sekali!":"Belum tepat, coba lagi.");
+      if(o[1] && onCorrect) onCorrect();
+    };
+    box.appendChild(b);
+  });
+}
+
+function views(){
+  const v = document.getElementById('view');
+  if(step===0){
+    v.innerHTML = `<div class="card hero">
+      <div class="float" style="left:8%; top:14%;">${pizzaSVG(4,1,46)}</div>
+      <div class="float" style="right:6%; top:20%; animation-delay:1s;">${pizzaSVG(8,3,38)}</div>
+      <h1 style="font-size:2.1rem; background:linear-gradient(135deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;">FRACTIO</h1>
+      <p style="font-weight:700; color:var(--sub); margin-top:-.3rem;">Interactive Fraction Learning Adventure</p>
+      ${pizzaSVG(4,1)}
+      <p style="color:var(--sub); max-width:400px; margin:.6rem auto 1rem;">Belajar konsep pecahan melalui eksplorasi, permainan, dan evaluasi interaktif.</p>
+      <button class="btn block" onclick="go(1)">Mulai Belajar</button>
+    </div>`;
+  }
+  else if(step===1){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Pendahuluan</span>
+      <h2>Capaian Pembelajaran</h2>
+      <p>Siswa mampu memahami konsep pecahan serta menghubungkan representasi konkret, visual, dan simbol matematika.</p>
+      <h3>Tujuan Pembelajaran</h3>
+      <ul style="padding-left:1.1rem; color:var(--sub); line-height:1.7;">
+        <li>Menjelaskan konsep dasar pecahan</li>
+        <li>Menentukan hubungan antarpecahan</li>
+        <li>Menyelesaikan permasalahan pecahan</li>
+        <li>Menerapkan pecahan dalam kehidupan sehari-hari</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pertanyaan Pemantik</h3>
+      ${pizzaSVG(4,1)}
+      <p>Jika sebuah pizza dibagi menjadi 4 bagian sama besar dan kamu mengambil 1 bagian, berapakah nilai bagian pizza tersebut?</p>
+      <div id="pemantik-opts"></div>
+    </div>
+    ${nav(false,'Lanjut Pembelajaran','()=>go(2)')}`;
+    mkOpts('pemantik-opts',[["1/2",false],["1/3",false],["1/4",true,"Tepat! Jawabannya akan makin jelas lewat aktivitas FRACTIO."],["4/1",false]]);
+  }
+  else if(step===2){
+    const tabs=["Konsep Dasar","Pecahan Senilai","Perbandingan","Operasi Hitung"];
+    const content=[
+      `<p>Pecahan menunjukkan bagian dari suatu keseluruhan.</p>${pizzaSVG(4,1)}<p style="text-align:center;">1 bagian dari 4 bagian = <b>1/4</b></p>`,
+      `<p>Pecahan senilai memiliki nilai sama meski bentuk bilangannya berbeda.</p>
+       <div style="display:flex; gap:1rem; justify-content:center; align-items:center;">
+         <div>${pizzaSVG(2,1,110)}<div class="fraction">1/2</div></div>
+         <div>${pizzaSVG(4,2,110)}<div class="fraction">2/4</div></div>
+       </div><p style="text-align:center; font-weight:700;">1/2 = 2/4 = 4/8</p>`,
+      `<p>Bandingkan pecahan dengan menyamakan penyebut, lalu lihat pembilangnya.</p>
+       ${barSVG(4,3)}<p style="text-align:center;">3/4 lebih besar daripada 1/4 sebab bagian yang terisi lebih banyak.</p>`,
+      `<p>Operasi penjumlahan pecahan sepenyebut: jumlahkan pembilangnya.</p>
+       <p style="text-align:center; font-weight:700; font-size:1.2rem;">1/4 + 2/4 = 3/4</p>${barSVG(4,3)}`
+    ];
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Learning</span>
+      <div class="tabs" id="learn-tabs"></div>
+      <div id="learn-content"></div>
+    </div>
+    <div class="card">
+      <h3>Latihan Cepat</h3>
+      <p>Manakah pecahan yang senilai dengan 1/2?</p>
+      <div id="learn-opts"></div>
+    </div>
+    ${nav(false,'Lanjut','()=>go(3)')}`;
+    const tb=document.getElementById('learn-tabs');
+    tabs.forEach((t,i)=>{
+      const b=document.createElement('button'); b.textContent=t; b.className=i===state.learnTab?'act':'';
+      b.onclick=()=>{ state.learnTab=i; render(); };
+      tb.appendChild(b);
+    });
+    document.getElementById('learn-content').innerHTML = content[state.learnTab];
+    mkOpts('learn-opts',[["1/3",false],["2/4",true,"Bagus! Kamu memahami konsep pecahan senilai."],["3/5",false],["4/5",false]]);
+  }
+  else if(step===3){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Laboratory</span>
+      <h2>Bagilah Pizza</h2>
+      <p>Pilih jumlah potongan, lalu <b>klik langsung potongan pizzanya</b> untuk memilih bagian yang kamu ambil.</p>
+      <div id="lab-pizza"></div>
+      <div class="fraction" id="lab-frac"></div>
+      <div class="frow" id="lab-btns"></div>
+    </div>
+    <div class="card">
+      <h3>Bandingkan Pecahan</h3>
+      <div style="display:flex; gap:1rem; justify-content:center; align-items:center;">
+        <div>${pizzaSVG(4,2,110)}<div class="fraction">2/4</div></div>
+        <div>${pizzaSVG(2,1,110)}<div class="fraction">1/2</div></div>
+      </div>
+      <p style="text-align:center; margin-top:.5rem;">Apakah kedua pecahan di atas memiliki nilai yang sama?</p>
+      <div id="lab-opts"></div>
+    </div>
+    ${nav(false,'Lanjut','()=>go(4)')}`;
+    const opts=[2,4,8];
+    const btnBox=document.getElementById('lab-btns');
+    if(!state.labTotal){ state.labTotal=4; state.labFilled=new Set([0]); }
+    function drawLab(){
+      const pizzaBox=document.getElementById('lab-pizza'); pizzaBox.innerHTML='';
+      pizzaBox.appendChild(pizzaSVGInteractive(state.labTotal, state.labFilled, 190, (i)=>{
+        if(state.labFilled.has(i)) state.labFilled.delete(i); else state.labFilled.add(i);
+        drawLab();
+      }));
+      document.getElementById('lab-frac').textContent = state.labFilled.size+"/"+state.labTotal;
+      [...btnBox.children].forEach(b=>b.classList.toggle('sel', +b.dataset.n===state.labTotal));
+    }
+    opts.forEach(n=>{
+      const b=document.createElement('button'); b.textContent=n+" bagian"; b.dataset.n=n;
+      b.onclick=()=>{ state.labTotal=n; state.labFilled=new Set([0]); drawLab(); };
+      btnBox.appendChild(b);
+    });
+    drawLab();
+    mkOpts('lab-opts',[["Ya",true,"Benar! 2/4 dan 1/2 menunjukkan proporsi yang sama."],["Tidak",false]]);
+  }
+  else if(step===4){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Challenge</span>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">Puzzle Quest</h3><span class="pts" id="pts-label">Poin: ${state.points}</span>
+      </div>
+      <p>Cocokkan dua kartu yang bernilai pecahan senilai.</p>
+      <div class="matchgrid" id="puzzle"></div>
+    </div>
+    <div class="card">
+      <h3>Recipe Quest</h3>
+      <p>Untuk membuat satu kue diperlukan 1/2 gelas gula. Rina ingin membuat 2 kue. Berapa gelas gula yang diperlukan?</p>
+      <div id="recipe-opts"></div>
+    </div>
+    <div class="card">
+      <h3>Treasure Hunt</h3>
+      <p>Pecahan yang senilai dengan 3/6 adalah?</p>
+      <div id="treasure-opts"></div>
+    </div>
+    ${nav(false,'Lanjut','()=>go(5)')}`;
+    const cards=[["1/2","a"],["2/4","a"],["1/4","b"],["2/8","b"],["3/4","c"],["6/8","c"]];
+    const box=document.getElementById('puzzle');
+    let picked=[];
+    cards.sort(()=>Math.random()-0.5).forEach((c,idx)=>{
+      const d=document.createElement('div'); d.className='mc'; d.textContent=c[0]; d.dataset.g=c[1]; d.dataset.idx=idx;
+      d.onclick=()=>{
+        if(d.classList.contains('matched')||picked.includes(d)) return;
+        d.classList.add('sel'); picked.push(d);
+        if(picked.length===2){
+          const ok = picked[0].dataset.g===picked[1].dataset.g;
+          setTimeout(()=>{
+            picked.forEach(p=>{ p.classList.remove('sel'); if(ok){p.classList.add('matched');} });
+            if(ok){ state.points+=10; state.matched++; document.getElementById('pts-label').textContent='Poin: '+state.points; }
+            picked=[];
+          }, ok?150:450);
+        }
+      };
+      box.appendChild(d);
+    });
+    mkOpts('recipe-opts',[["1 gelas",true,"Tepat! 1/2 + 1/2 = 1 gelas gula."],["1/2 gelas",false],["2/3 gelas",false],["3 gelas",false]],()=>{state.points+=10; document.getElementById('pts-label').textContent='Poin: '+state.points;});
+    mkOpts('treasure-opts',[["1/2",true,"Kode ditemukan! Tantangan selesai."],["2/3",false],["3/4",false],["4/5",false]],()=>{state.points+=10; document.getElementById('pts-label').textContent='Poin: '+state.points;});
+  }
+  else if(step===5){
+    v.innerHTML = `<div class="card"><span class="badge">Quiz Master</span>
+      <h3>Soal 1</h3><p>Pecahan yang senilai dengan 3/4 adalah...</p><div id="q1"></div></div>
+    <div class="card"><h3>Soal 2</h3><p>Sebuah kue dipotong menjadi 8 bagian sama besar. Budi memakan 4 bagian. Pecahan bagian yang dimakan adalah...</p><div id="q2"></div></div>
+    <div class="card"><h3>Soal 3</h3><p>Hasil dari 1/4 + 2/4 adalah...</p><div id="q3"></div></div>
+    <div class="card" id="quiz-result" style="display:none; text-align:center;">
+      <h2>Hasil Kamu</h2><div class="fraction" id="quiz-score" style="font-size:2.2rem;"></div><p id="quiz-msg"></p>
+    </div>
+    ${nav(false,'Lanjut','()=>go(6)')}`;
+    function mkQuiz(id, idx, opts){
+      const box=document.getElementById(id);
+      opts.forEach(o=>{
+        const b=document.createElement('button'); b.className='opt'; b.textContent=o[0];
+        b.onclick=()=>{
+          if(state.quiz[idx]!==null) return;
+          state.quiz[idx]=o[1];
+          [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
+          b.classList.add(o[1]?'correct':'wrong');
+          if(o[1]) state.score+=Math.round(100/3);
+          if(state.quiz.every(x=>x!==null)){
+            const res=document.getElementById('quiz-result'); res.style.display='block';
+            const s=Math.min(state.score,100);
+            document.getElementById('quiz-score').textContent = s+"/100";
+            document.getElementById('quiz-msg').textContent = s>=80 ? "Bagus! Pemahaman pecahanmu sudah baik." : "Terus berlatih, kamu pasti bisa!";
+          }
+        };
+        box.appendChild(b);
+      });
+    }
+    mkQuiz('q1',0,[["6/8",true],["4/6",false],["5/8",false],["8/10",false]]);
+    mkQuiz('q2',1,[["1/2",true],["1/4",false],["3/4",false],["4/8",false]]);
+    mkQuiz('q3',2,[["3/4",true],["3/8",false],["2/4",false],["1/4",false]]);
+  }
+  else if(step===6){
+    v.innerHTML = `<div class="card"><span class="badge">Penutup</span>
+      <h2>Ringkasan Materi</h2>
+      <p>Pecahan adalah bilangan yang menyatakan bagian dari suatu keseluruhan. Pecahan senilai memiliki nilai sama meskipun bentuk bilangannya berbeda. Contoh: 1/2 = 2/4.</p>
+    </div>
+    <div class="card">
+      <h3>Refleksi Siswa</h3>
+      <p style="margin-bottom:.3rem;">Apa hal baru yang kamu pelajari?</p><textarea id="r0" placeholder="Tulis jawabanmu..."></textarea>
+      <p style="margin:.7rem 0 .3rem;">Aktivitas mana yang paling membantu?</p><textarea id="r1" placeholder="Tulis jawabanmu..."></textarea>
+      <p style="margin:.7rem 0 .3rem;">Bagian mana yang masih sulit?</p><textarea id="r2" placeholder="Tulis jawabanmu..."></textarea>
+    </div>
+    <div class="card" style="text-align:center;" id="penutup-status">
+      <h2>Halo, ${state.name}! 🎉</h2>
+      <p style="color:var(--sub);">Kamu telah menyelesaikan seluruh rangkaian pembelajaran FRACTIO. Klik tombol di bawah untuk mengirim jawabanmu ke guru.</p>
+      <button class="btn block" id="kirim-btn" onclick="finishAndSend()">Kirim Jawaban ke Guru</button>
+    </div>
+    <div class="navrow"><button class="btn secondary" onclick="go(5)">Kembali</button><span></span></div>`;
+    document.getElementById('r0').value=state.reflect[0]; document.getElementById('r1').value=state.reflect[1]; document.getElementById('r2').value=state.reflect[2];
+    ['r0','r1','r2'].forEach((id,i)=>document.getElementById(id).oninput=e=>{state.reflect[i]=e.target.value;});
+    if(state.submitted){
+      document.getElementById('penutup-status').innerHTML = `<h2>Terkirim! ✅</h2><p style="color:var(--sub);">Jawaban kamu sudah tersimpan dan bisa dilihat gurumu di Dashboard Guru.</p>`;
+    }
+  }
+}
+async function finishAndSend(){
+  const btn=document.getElementById('kirim-btn'); btn.disabled=true; btn.textContent='Mengirim...';
+  await submitJawaban();
+  views();
+}
+
+async function renderGuruDashboard(){
+  const view=document.getElementById('view');
+  view.innerHTML = `<div class="card" style="text-align:center; color:var(--sub);">Memuat data siswa...</div>`;
+  let rows=[];
+  try{
+    const res = await fetch(SUPABASE_URL+"/rest/v1/submissions?select=*&order=created_at.desc", {
+      headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY }
+    });
+    rows = await res.json();
+  }catch(e){ console.error("Gagal memuat data:", e); }
+  if(!Array.isArray(rows) || rows.length===0){
+    view.innerHTML = `<div class="card"><span class="badge">Dashboard Guru</span><h2>Rekap Aktivitas Siswa</h2>
+      <p style="color:var(--sub);">Belum ada siswa yang mengirim jawaban. Data akan muncul di sini begitu ada siswa yang menyelesaikan FRACTIO dan menekan "Kirim Jawaban ke Guru".</p></div>`;
+    return;
+  }
+  const scores = rows.map(r=>r.quiz_score||0);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  view.innerHTML = `<div class="card"><span class="badge">Dashboard Guru</span>
+    <h2>Rekap Aktivitas Siswa</h2>
+    <div class="stat">
+      <div><b>${rows.length}</b><span>Siswa mengirim</span></div>
+      <div><b>${avg}</b><span>Rata-rata nilai Quiz</span></div>
+      <div><b>${Math.round(rows.reduce((a,r)=>a+(r.challenge_points||0),0)/rows.length)}</b><span>Rata-rata Poin Challenge</span></div>
+    </div>
+    <table class="dash"><tr><th>Nama</th><th>Kelas</th><th>Nilai Quiz</th><th>Poin Challenge</th></tr>
+    ${rows.map(r=>`<tr><td>${r.name||'-'}</td><td>${r.class||'-'}</td><td>${r.quiz_score!=null?r.quiz_score:'-'}</td><td>${r.challenge_points!=null?r.challenge_points:'-'}</td></tr>`).join('')}
+    </table>
+  </div>
+  <div class="card">
+    <h3>Progres Nilai Quiz per Siswa</h3>
+    ${rows.map(r=>`<div style="margin-bottom:.6rem;"><div style="display:flex; justify-content:space-between; font-size:.82rem; font-weight:700;"><span>${r.name||'-'}</span><span>${r.quiz_score||0}</span></div><div class="bar"><i style="width:${r.quiz_score||0}%;"></i></div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Refleksi Siswa</h3>
+    ${rows.map(r=>`<div style="margin-bottom:.8rem; padding-bottom:.6rem; border-bottom:1px solid var(--purple-l);"><b>${r.name||'-'}</b>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">Hal baru: ${r.reflect1||'-'}</p>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">Paling membantu: ${r.reflect2||'-'}</p>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">Masih sulit: ${r.reflect3||'-'}</p></div>`).join('')}
+  </div>`;
+}
+function renderShell(showProgress){
+  document.getElementById('app').innerHTML = `<header class="top">
+    <div class="brandbar"><div class="logo">F</div><b>FRACTIO</b>
+      <div class="userchip"><div class="av">${state.name.charAt(0).toUpperCase()}</div>
+        <span style="font-size:.8rem; font-weight:700;">${state.name} ${state.role==='guru'?'(Guru)':''}</span>
+        <button class="logoutbtn" onclick="logout()">Keluar</button></div>
+    </div>
+    ${showProgress ? '<div class="progress" id="progress"></div><div class="steplabel" id="steplabel"></div>' : '<div class="steplabel">Dashboard Guru</div>'}
+  </header>
+  <main id="view"></main>`;
+}
+function render(){
+  if(!state.loggedIn){ renderLogin(); return; }
+  if(state.role==='guru'){ renderShell(false); renderGuruDashboard(); return; }
+  renderShell(true); renderProgress(); views();
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FRACTIO - Interactive Fraction Learning Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --purple:#8B5CF6; --purple-d:#6D28D9; --purple-l:#F3E8FF;
+  --pink:#EC4899; --pink-d:#BE185D; --pink-l:#FDF2F8;
+  --orange:#FF9F43; --orange-d:#D9770A;
+  --teal:#20BF9D; --teal-d:#0E8C6F; --teal-l:#E3FBF5;
+  --bg1:#FFFFFF; --bg2:#FBEAFA; --bg:#FBF6FF; --card:#FFFFFF; --ink:#3B1E5E; --sub:#8B7AA8; --err:#FF5C6C;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg1:#1D1233; --bg2:#2B1A3E; --bg:#241736; --card:#2A1D45; --ink:#F3EAFF; --sub:#C3AEDD; --purple-l:#3A2A5C; --pink-l:#3E2438; --teal-l:#183E38; }
+}
+:root[data-theme="dark"]{ --bg1:#1D1233; --bg2:#2B1A3E; --bg:#241736; --card:#2A1D45; --ink:#F3EAFF; --sub:#C3AEDD; --purple-l:#3A2A5C; --pink-l:#3E2438; --teal-l:#183E38; }
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0; font-family:'Nunito',sans-serif; background:linear-gradient(165deg, var(--bg1), var(--bg2)); background-attachment:fixed; color:var(--ink); padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); min-height:100%;}
+h1,h2,h3{font-family:'Poppins',sans-serif; margin:0 0 .4em; font-weight:700;}
+.wrap{max-width:640px; margin:0 auto; padding:.9rem 1.1rem 3rem;}
+.wrap.wide{max-width:900px;}
+header.top{position:sticky; top:env(safe-area-inset-top,0px); background:var(--card); box-shadow:0 2px 10px rgba(139,92,246,.07); z-index:5; padding:.7rem 1rem .5rem; margin:0 -1rem .8rem; border-radius:0 0 16px 16px;}
+.brandbar{display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem;}
+.logo{width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,var(--purple),var(--pink)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-family:'Poppins',sans-serif;}
+.brandbar b{font-family:'Poppins',sans-serif; font-size:1.1rem;}
+.progress{display:flex; gap:4px;}
+.progress span{flex:1; height:6px; border-radius:4px; background:var(--purple-l); transition:background .3s;}
+.progress span.done{background:linear-gradient(90deg,var(--purple),var(--pink));}
+.progress span.now{background:var(--pink);}
+.steplabel{font-size:.78rem; color:var(--sub); margin-top:.35rem; font-weight:600;}
+.card{background:var(--card); border-radius:var(--r); padding:1.25rem 1.15rem; margin-bottom:1rem; box-shadow:0 4px 18px rgba(139,92,246,.1); animation:rise .35s ease;}
+@keyframes rise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+.btn{display:inline-block; border:none; border-radius:14px; padding:.75rem 1.4rem; font-family:'Poppins',sans-serif; font-weight:600; font-size:.95rem; cursor:pointer; color:#fff; background:linear-gradient(135deg,var(--purple),var(--pink)); box-shadow:0 6px 16px rgba(139,92,246,.35); transition:transform .12s;}
+.btn:active{transform:scale(.97);}
+.btn.secondary{background:transparent; color:var(--purple); border:2px solid var(--purple); box-shadow:none;}
+.btn.block{display:block; width:100%; text-align:center;}
+.btn.excel{background:linear-gradient(135deg,#1E9E5A,#20BF9D); box-shadow:0 6px 16px rgba(32,191,157,.3);}
+.btn:disabled{opacity:.45; cursor:default; box-shadow:none;}
+.navrow{display:flex; justify-content:space-between; gap:.6rem; margin-top:1rem;}
+.badge{display:inline-flex; align-items:center; gap:.3rem; background:var(--purple-l); color:var(--purple-d); font-size:.72rem; font-weight:700; letter-spacing:.02em; padding:.28rem .7rem; border-radius:20px; margin-bottom:.6rem; text-transform:uppercase;}
+.opt{display:block; width:100%; text-align:left; background:var(--bg); border:2px solid transparent; border-radius:14px; padding:.7rem .95rem; margin-bottom:.55rem; font-family:'Nunito',sans-serif; font-weight:700; font-size:.95rem; color:var(--ink); cursor:pointer; transition:.15s;}
+.opt:hover{border-color:var(--purple-l);}
+.opt.correct{border-color:var(--teal); background:var(--teal-l); animation:pop .3s;}
+.opt.wrong{border-color:var(--err); background:rgba(255,92,108,.1);}
+@keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.03);}100%{transform:scale(1);}}
+.feedback{margin-top:.5rem; font-weight:700; font-size:.88rem; display:flex; align-items:center; gap:.35rem;}
+.feedback.ok{color:var(--teal-d);}
+.feedback.err{color:var(--err);}
+.fraction{font-size:1.7rem; font-weight:800; text-align:center; margin:.4rem 0; font-family:'Poppins',sans-serif; color:var(--purple-d);}
+.frow{display:flex; gap:.4rem; justify-content:center; margin:.7rem 0; flex-wrap:wrap;}
+.frow button{min-width:46px; height:38px; padding:0 .5rem; border-radius:10px; border:2px solid var(--purple); background:transparent; color:var(--purple); font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif;}
+.frow button.sel{background:var(--purple); color:#fff;}
+.tabs{display:flex; gap:.4rem; margin-bottom:.9rem; flex-wrap:wrap;}
+.tabs button{flex:1; min-width:80px; border:none; background:var(--purple-l); color:var(--purple-d); font-family:'Poppins',sans-serif; font-weight:600; font-size:.78rem; padding:.55rem .4rem; border-radius:12px; cursor:pointer;}
+.tabs button.act{background:var(--purple); color:#fff;}
+.tablewrap{overflow-x:auto;}
+table.dash{width:100%; border-collapse:collapse; font-size:.85rem;}
+table.dash th,table.dash td{padding:.55rem .4rem; border-bottom:1px solid var(--purple-l); text-align:center;}
+table.dash th{color:var(--sub); font-weight:700; font-size:.72rem; text-transform:uppercase;}
+.stat{display:flex; gap:.6rem; margin-bottom:.9rem; flex-wrap:wrap;}
+.stat div{flex:1; min-width:110px; background:var(--purple-l); border-radius:14px; padding:.7rem .5rem; text-align:center;}
+.stat b{display:block; font-size:1.25rem; font-family:'Poppins',sans-serif; color:var(--purple-d);}
+.stat span{font-size:.68rem; color:var(--sub); font-weight:600;}
+textarea{width:100%; border-radius:12px; border:2px solid var(--purple-l); padding:.65rem; font-family:'Nunito',sans-serif; font-size:.9rem; background:var(--bg); color:var(--ink); resize:vertical; min-height:56px;}
+.bar{height:12px; border-radius:6px; background:var(--purple-l); overflow:hidden; margin-top:.3rem;}
+.bar i{display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--purple)); border-radius:6px; transition:width .4s;}
+.matchgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem;}
+.mc{background:var(--bg); border:2px solid var(--purple-l); border-radius:12px; padding:.75rem .3rem; text-align:center; font-weight:800; font-family:'Poppins',sans-serif; cursor:pointer; font-size:1.05rem;}
+.mc.sel{border-color:var(--purple); background:var(--purple-l);}
+.mc.matched{border-color:var(--teal); background:var(--teal-l); color:var(--teal-d); cursor:default;}
+.hero{position:relative; text-align:center; overflow:hidden; padding:1.6rem 1rem 1.2rem;}
+.float{position:absolute; opacity:.5; animation:float 4s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.pts{font-family:'Poppins',sans-serif; font-weight:700; color:var(--orange-d); font-size:.85rem;}
+.loginscreen{min-height:100vh; min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:1.2rem;}
+.logincard{max-width:380px; width:100%; text-align:center;}
+.roletabs{display:flex; gap:.4rem; margin-bottom:1rem; background:var(--purple-l); border-radius:12px; padding:.25rem;}
+.roletabs button{flex:1; border:none; background:transparent; color:var(--purple-d); font-family:'Poppins',sans-serif; font-weight:600; font-size:.85rem; padding:.55rem 0; border-radius:9px; cursor:pointer;}
+.roletabs button.act{background:var(--purple); color:#fff;}
+.field{text-align:left; margin-bottom:.8rem;}
+.field label{display:block; font-size:.78rem; font-weight:700; color:var(--sub); margin-bottom:.3rem;}
+.field input{width:100%; border:2px solid var(--purple-l); border-radius:12px; padding:.65rem .8rem; font-family:'Nunito',sans-serif; font-size:.92rem; background:var(--bg); color:var(--ink);}
+.field input:focus{outline:none; border-color:var(--purple);}
+.loginerr{color:var(--err); font-size:.8rem; font-weight:700; margin-top:-.3rem; margin-bottom:.6rem; min-height:1.1em;}
+.userchip{display:flex; align-items:center; gap:.5rem; margin-left:auto;}
+.userchip .av{width:26px; height:26px; border-radius:50%; background:var(--purple); color:#fff; font-family:'Poppins',sans-serif; font-weight:700; font-size:.75rem; display:flex; align-items:center; justify-content:center;}
+.logoutbtn{background:none; border:none; color:var(--sub); font-size:.72rem; font-weight:700; cursor:pointer; text-decoration:underline;}
+.dashhead{display:flex; justify-content:space-between; align-items:flex-start; gap:.8rem; flex-wrap:wrap; margin-bottom:.6rem;}
+.dashactions{display:flex; gap:.5rem; flex-wrap:wrap;}
+.dashactions .btn{padding:.55rem 1rem; font-size:.82rem;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const STEPS = ["Home","Introduction","Fraction Learning","Fraction Laboratory","Fraction Challenge","Quiz Master","Closing"];
+let step = 0;
+const SUPABASE_URL = "https://nszhefguhdulfnyrxwic.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zemhlZmd1aGR1bGZueXJ4d2ljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MDA4MTMsImV4cCI6MjEwNTk3NjgxM30.R2MHOxD68o7Ud4npcJsRiJKYnM-lrUQ__xEJrPDT5ZA";
+const state = { quiz:[null,null,null], score:0, points:0, reflect:["","",""], learnTab:0,
+  loggedIn:false, role:'student', name:'', className:'', loginErr:'', submitted:false, sendErr:'' };
+let dashRows = [];
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderLogin(){
+  const app=document.getElementById('app');
+  app.className='wrap';
+  app.innerHTML = `<div class="loginscreen"><div class="card logincard">
+    <div class="logo" style="margin:0 auto 1rem;">F</div>
+    <h2>Sign in to FRACTIO</h2>
+    <p style="color:var(--sub); font-size:.88rem; margin-bottom:1.1rem;">Interactive Fraction Learning Adventure</p>
+    <div class="roletabs" id="roletabs"></div>
+    <div class="field"><label>Name</label><input id="login-name" placeholder="Enter your name" value="${esc(state.name)}"></div>
+    <div class="field" id="login-class-wrap"><label>Class</label><input id="login-class" placeholder="Example: VII A" value="${esc(state.className)}"></div>
+    <div class="loginerr" id="login-err">${esc(state.loginErr)}</div>
+    <button class="btn block" onclick="doLogin()">Sign In</button>
+  </div></div>`;
+  const rt=document.getElementById('roletabs');
+  [["student","Student"],["teacher","Teacher"]].forEach(r=>{
+    const b=document.createElement('button'); b.textContent=r[1]; b.className=state.role===r[0]?'act':'';
+    b.onclick=()=>{ state.name=document.getElementById('login-name').value; state.className=document.getElementById('login-class').value; state.role=r[0]; renderLogin(); };
+    rt.appendChild(b);
+  });
+}
+function doLogin(){
+  const name=document.getElementById('login-name').value.trim();
+  const cls=document.getElementById('login-class').value.trim();
+  if(!name){ state.loginErr='Name is required.'; renderLogin(); return; }
+  state.name=name; state.className=cls; state.loggedIn=true; state.loginErr='';
+  step = 0;
+  render();
+}
+function logout(){
+  Object.assign(state,{quiz:[null,null,null], score:0, points:0, reflect:["","",""], learnTab:0, loggedIn:false, name:'', className:'', submitted:false, sendErr:''});
+  step=0; render();
+}
+
+async function submitAnswers(){
+  if(state.submitted) return true;
+  try{
+    const res = await fetch(SUPABASE_URL+"/rest/v1/submissions", {
+      method:"POST",
+      headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" },
+      body: JSON.stringify({ name: state.name, class: state.className, quiz_score: Math.min(Math.round(state.score),100),
+        challenge_points: state.points, reflect1: state.reflect[0], reflect2: state.reflect[1], reflect3: state.reflect[2] })
+    });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    state.submitted=true; state.sendErr='';
+    return true;
+  }catch(e){ console.error("Failed to send answers:", e); state.sendErr='Could not send your answers. Please check your connection and try again.'; return false; }
+}
+
+function pizzaSVG(n, filled, size){
+  size = size||150; const R=size*0.467; const C=size/2;
+  let paths="";
+  for(let i=0;i<n;i++){
+    const a0=(i/n)*2*Math.PI-Math.PI/2, a1=((i+1)/n)*2*Math.PI-Math.PI/2;
+    const x0=C+R*Math.cos(a0), y0=C+R*Math.sin(a0), x1=C+R*Math.cos(a1), y1=C+R*Math.sin(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    const fill=i<filled?"var(--orange)":"#FFE3B8";
+    paths+=`<path d="M${C},${C} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z" fill="${fill}" stroke="var(--card)" stroke-width="2.5"/>`;
+  }
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;margin:0 auto;">${paths}</svg>`;
+}
+function pizzaSVGInteractive(n, filledSet, size, onToggle){
+  size = size||190; const R=size*0.467; const C=size/2;
+  let paths="";
+  for(let i=0;i<n;i++){
+    const a0=(i/n)*2*Math.PI-Math.PI/2, a1=((i+1)/n)*2*Math.PI-Math.PI/2;
+    const x0=C+R*Math.cos(a0), y0=C+R*Math.sin(a0), x1=C+R*Math.cos(a1), y1=C+R*Math.sin(a1);
+    const large=(a1-a0)>Math.PI?1:0;
+    const fill=filledSet.has(i)?"var(--orange)":"#FFE3B8";
+    paths+=`<path data-i="${i}" d="M${C},${C} L${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} Z" fill="${fill}" stroke="var(--card)" stroke-width="2.5" style="cursor:pointer; transition:fill .15s;"/>`;
+  }
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" style="display:block;margin:0 auto;">${paths}</svg>`;
+  wrap.querySelectorAll('path').forEach(p=>{ p.onclick=()=>onToggle(+p.dataset.i); });
+  return wrap.firstChild;
+}
+function barSVG(n, filled){
+  let cells=""; const w=280/n;
+  for(let i=0;i<n;i++){
+    cells+=`<rect x="${i*w+2}" y="4" width="${w-4}" height="40" rx="6" fill="${i<filled?'var(--teal)':'var(--purple-l)'}"/>`;
+  }
+  return `<svg viewBox="0 0 280 48" width="100%" height="48" style="max-width:280px;display:block;margin:.6rem auto;">${cells}</svg>`;
+}
+function renderProgress(){
+  document.getElementById('progress').innerHTML = STEPS.map((s,i)=>`<span class="${i<step?'done':i===step?'now':''}"></span>`).join('');
+  document.getElementById('steplabel').textContent = (step+1)+"/"+STEPS.length+" · "+STEPS[step];
+}
+function nav(nextLabel, nextStep){
+  return `<div class="navrow"><button class="btn secondary" onclick="go(${step-1})">Back</button><button class="btn" onclick="go(${nextStep})">${nextLabel}</button></div>`;
+}
+function go(n){ step=n; render(); window.scrollTo(0,0); }
+function mkOpts(boxId, opts, onCorrect){
+  const box=document.getElementById(boxId);
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o[0];
+    b.onclick=()=>{
+      [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
+      b.classList.add(o[1]?'correct':'wrong');
+      let fb=box.querySelector('.feedback'); if(!fb){fb=document.createElement('div'); fb.className='feedback'; box.appendChild(fb);}
+      fb.className='feedback '+(o[1]?'ok':'err');
+      fb.textContent = o[2] || (o[1]?"Exactly right!":"Not quite, try again.");
+      if(o[1] && onCorrect) onCorrect();
+    };
+    box.appendChild(b);
+  });
+}
+
+function views(){
+  const v = document.getElementById('view');
+  if(step===0){
+    v.innerHTML = `<div class="card hero">
+      <div class="float" style="left:8%; top:14%;">${pizzaSVG(4,1,46)}</div>
+      <div class="float" style="right:6%; top:20%; animation-delay:1s;">${pizzaSVG(8,3,38)}</div>
+      <h1 style="font-size:2.1rem; background:linear-gradient(135deg,var(--purple),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent;">FRACTIO</h1>
+      <p style="font-weight:700; color:var(--sub); margin-top:-.3rem;">Interactive Fraction Learning Adventure</p>
+      ${pizzaSVG(4,1)}
+      <p style="color:var(--sub); max-width:400px; margin:.6rem auto 1rem;">Learn fraction concepts through exploration, games, and interactive assessment.</p>
+      <button class="btn block" onclick="go(1)">Start Learning</button>
+    </div>`;
+  }
+  else if(step===1){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Introduction</span>
+      <h2>Learning Outcome</h2>
+      <p>Students are able to understand the concept of fractions and connect concrete, visual, and mathematical symbol representations.</p>
+      <h3>Learning Objectives</h3>
+      <ul style="padding-left:1.1rem; color:var(--sub); line-height:1.7;">
+        <li>Explain the basic concept of fractions</li>
+        <li>Determine the relationships between fractions</li>
+        <li>Solve problems involving fractions</li>
+        <li>Apply fractions in everyday life</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Trigger Question</h3>
+      ${pizzaSVG(4,1)}
+      <p>If a pizza is divided into 4 equal parts and you take 1 part, what is the value of that part of the pizza?</p>
+      <div id="trigger-opts"></div>
+    </div>
+    ${nav('Continue Learning', 2)}`;
+    mkOpts('trigger-opts',[["1/2",false],["1/3",false],["1/4",true,"Correct! It will become even clearer through the FRACTIO activities."],["4/1",false]]);
+  }
+  else if(step===2){
+    const tabs=["Basic Concept","Equivalent Fractions","Comparing","Operations"];
+    const content=[
+      `<p>A fraction shows a part of a whole.</p>${pizzaSVG(4,1)}<p style="text-align:center;">1 part out of 4 parts = <b>1/4</b></p>`,
+      `<p>Equivalent fractions have the same value even though they are written differently.</p>
+       <div style="display:flex; gap:1rem; justify-content:center; align-items:center;">
+         <div>${pizzaSVG(2,1,110)}<div class="fraction">1/2</div></div>
+         <div>${pizzaSVG(4,2,110)}<div class="fraction">2/4</div></div>
+       </div><p style="text-align:center; font-weight:700;">1/2 = 2/4 = 4/8</p>`,
+      `<p>Compare fractions by making the denominators the same, then look at the numerators.</p>
+       ${barSVG(4,3)}<p style="text-align:center;">3/4 is greater than 1/4 because more parts are filled.</p>`,
+      `<p>Adding fractions with the same denominator: add the numerators.</p>
+       <p style="text-align:center; font-weight:700; font-size:1.2rem;">1/4 + 2/4 = 3/4</p>${barSVG(4,3)}`
+    ];
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Learning</span>
+      <div class="tabs" id="learn-tabs"></div>
+      <div id="learn-content"></div>
+    </div>
+    <div class="card">
+      <h3>Quick Practice</h3>
+      <p>Which fraction is equivalent to 1/2?</p>
+      <div id="learn-opts"></div>
+    </div>
+    ${nav('Next', 3)}`;
+    const tb=document.getElementById('learn-tabs');
+    tabs.forEach((t,i)=>{
+      const b=document.createElement('button'); b.textContent=t; b.className=i===state.learnTab?'act':'';
+      b.onclick=()=>{ state.learnTab=i; render(); };
+      tb.appendChild(b);
+    });
+    document.getElementById('learn-content').innerHTML = content[state.learnTab];
+    mkOpts('learn-opts',[["1/3",false],["2/4",true,"Great! You understand equivalent fractions."],["3/5",false],["4/5",false]]);
+  }
+  else if(step===3){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Laboratory</span>
+      <h2>Divide the Pizza</h2>
+      <p>Choose the number of slices, then <b>click the slices directly</b> to select the parts you take.</p>
+      <div id="lab-pizza"></div>
+      <div class="fraction" id="lab-frac"></div>
+      <div class="frow" id="lab-btns"></div>
+    </div>
+    <div class="card">
+      <h3>Compare Fractions</h3>
+      <div style="display:flex; gap:1rem; justify-content:center; align-items:center;">
+        <div>${pizzaSVG(4,2,110)}<div class="fraction">2/4</div></div>
+        <div>${pizzaSVG(2,1,110)}<div class="fraction">1/2</div></div>
+      </div>
+      <p style="text-align:center; margin-top:.5rem;">Do the two fractions above have the same value?</p>
+      <div id="lab-opts"></div>
+    </div>
+    ${nav('Next', 4)}`;
+    const opts=[2,4,8];
+    const btnBox=document.getElementById('lab-btns');
+    if(!state.labTotal){ state.labTotal=4; state.labFilled=new Set([0]); }
+    function drawLab(){
+      const pizzaBox=document.getElementById('lab-pizza'); pizzaBox.innerHTML='';
+      pizzaBox.appendChild(pizzaSVGInteractive(state.labTotal, state.labFilled, 190, (i)=>{
+        if(state.labFilled.has(i)) state.labFilled.delete(i); else state.labFilled.add(i);
+        drawLab();
+      }));
+      document.getElementById('lab-frac').textContent = state.labFilled.size+"/"+state.labTotal;
+      [...btnBox.children].forEach(b=>b.classList.toggle('sel', +b.dataset.n===state.labTotal));
+    }
+    opts.forEach(n=>{
+      const b=document.createElement('button'); b.textContent=n+" slices"; b.dataset.n=n;
+      b.onclick=()=>{ state.labTotal=n; state.labFilled=new Set([0]); drawLab(); };
+      btnBox.appendChild(b);
+    });
+    drawLab();
+    mkOpts('lab-opts',[["Yes",true,"Correct! 2/4 and 1/2 represent the same proportion."],["No",false,"Not quite. Look at how much of the pizza is shaded in each one."]]);
+  }
+  else if(step===4){
+    v.innerHTML = `<div class="card">
+      <span class="badge">Fraction Challenge</span>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">Puzzle Quest</h3><span class="pts" id="pts-label">Points: ${state.points}</span>
+      </div>
+      <p>Match two cards that show equivalent fractions.</p>
+      <div class="matchgrid" id="puzzle"></div>
+    </div>
+    <div class="card">
+      <h3>Recipe Quest</h3>
+      <p>To make one cake, 1/2 cup of sugar is needed. Rina wants to make 2 cakes. How many cups of sugar does she need?</p>
+      <div id="recipe-opts"></div>
+    </div>
+    <div class="card">
+      <h3>Treasure Hunt</h3>
+      <p>Which fraction is equivalent to 3/6?</p>
+      <div id="treasure-opts"></div>
+    </div>
+    ${nav('Next', 5)}`;
+    const cards=[["1/2","a"],["2/4","a"],["1/4","b"],["2/8","b"],["3/4","c"],["6/8","c"]];
+    const box=document.getElementById('puzzle');
+    let picked=[];
+    cards.sort(()=>Math.random()-0.5).forEach((c)=>{
+      const d=document.createElement('div'); d.className='mc'; d.textContent=c[0]; d.dataset.g=c[1];
+      d.onclick=()=>{
+        if(d.classList.contains('matched')||picked.includes(d)||picked.length>=2) return;
+        d.classList.add('sel'); picked.push(d);
+        if(picked.length===2){
+          const ok = picked[0].dataset.g===picked[1].dataset.g;
+          setTimeout(()=>{
+            picked.forEach(p=>{ p.classList.remove('sel'); if(ok){p.classList.add('matched');} });
+            if(ok){ state.points+=10; document.getElementById('pts-label').textContent='Points: '+state.points; }
+            picked=[];
+          }, ok?150:450);
+        }
+      };
+      box.appendChild(d);
+    });
+    mkOpts('recipe-opts',[["1 cup",true,"Correct! 1/2 + 1/2 = 1 cup of sugar."],["1/2 cup",false],["2/3 cup",false],["3 cups",false]],()=>{state.points+=10; document.getElementById('pts-label').textContent='Points: '+state.points;});
+    mkOpts('treasure-opts',[["1/2",true,"Code found! Challenge complete."],["2/3",false],["3/4",false],["4/5",false]],()=>{state.points+=10; document.getElementById('pts-label').textContent='Points: '+state.points;});
+  }
+  else if(step===5){
+    v.innerHTML = `<div class="card"><span class="badge">Quiz Master</span>
+      <h3>Question 1</h3><p>Which fraction is equivalent to 3/4?</p><div id="q1"></div></div>
+    <div class="card"><h3>Question 2</h3><p>A cake is cut into 8 equal pieces. Budi eats 4 pieces. What fraction of the cake did he eat?</p><div id="q2"></div></div>
+    <div class="card"><h3>Question 3</h3><p>What is the result of 1/4 + 2/4?</p><div id="q3"></div></div>
+    <div class="card" id="quiz-result" style="display:none; text-align:center;">
+      <h2>Your Result</h2><div class="fraction" id="quiz-score" style="font-size:2.2rem;"></div><p id="quiz-msg"></p>
+    </div>
+    ${nav('Next', 6)}`;
+    function mkQuiz(id, idx, opts){
+      const box=document.getElementById(id);
+      opts.forEach(o=>{
+        const b=document.createElement('button'); b.className='opt'; b.textContent=o[0];
+        b.onclick=()=>{
+          if(state.quiz[idx]!==null) return;
+          state.quiz[idx]=o[1];
+          [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
+          b.classList.add(o[1]?'correct':'wrong');
+          let fb=document.createElement('div'); fb.className='feedback '+(o[1]?'ok':'err');
+          fb.textContent=o[1]?"Correct!":"Not quite. Correct answer: "+opts.find(x=>x[1])[0];
+          box.appendChild(fb);
+          if(o[1]) state.score+=100/3;
+          if(state.quiz.every(x=>x!==null)){
+            const res=document.getElementById('quiz-result'); res.style.display='block';
+            const s=Math.min(Math.round(state.score),100);
+            document.getElementById('quiz-score').textContent = s+"/100";
+            document.getElementById('quiz-msg').textContent = s>=80 ? "Great job! Your understanding of fractions is good." : "Keep practicing, you can do it!";
+          }
+        };
+        box.appendChild(b);
+      });
+    }
+    mkQuiz('q1',0,[["6/8",true],["4/6",false],["5/8",false],["8/10",false]]);
+    mkQuiz('q2',1,[["1/2",true],["1/4",false],["3/4",false],["4/8",false]]);
+    mkQuiz('q3',2,[["3/4",true],["3/8",false],["2/4",false],["1/4",false]]);
+    if(state.quiz.every(x=>x!==null)){
+      const res=document.getElementById('quiz-result'); res.style.display='block';
+      const s=Math.min(Math.round(state.score),100);
+      document.getElementById('quiz-score').textContent = s+"/100";
+      document.getElementById('quiz-msg').textContent = s>=80 ? "Great job! Your understanding of fractions is good." : "Keep practicing, you can do it!";
+    }
+  }
+  else if(step===6){
+    v.innerHTML = `<div class="card"><span class="badge">Closing</span>
+      <h2>Summary</h2>
+      <p>A fraction is a number that represents a part of a whole. Equivalent fractions have the same value even though they are written differently. Example: 1/2 = 2/4.</p>
+    </div>
+    <div class="card">
+      <h3>Student Reflection</h3>
+      <p style="margin-bottom:.3rem;">What new thing did you learn?</p><textarea id="r0" placeholder="Write your answer..."></textarea>
+      <p style="margin:.7rem 0 .3rem;">Which activity helped you the most?</p><textarea id="r1" placeholder="Write your answer..."></textarea>
+      <p style="margin:.7rem 0 .3rem;">Which part is still difficult?</p><textarea id="r2" placeholder="Write your answer..."></textarea>
+    </div>
+    <div class="card" style="text-align:center;" id="closing-status"></div>
+    <div class="navrow"><button class="btn secondary" onclick="go(5)">Back</button><span></span></div>`;
+    document.getElementById('r0').value=state.reflect[0]; document.getElementById('r1').value=state.reflect[1]; document.getElementById('r2').value=state.reflect[2];
+    ['r0','r1','r2'].forEach((id,i)=>document.getElementById(id).oninput=e=>{state.reflect[i]=e.target.value;});
+    drawClosingStatus();
+  }
+}
+function drawClosingStatus(){
+  const box=document.getElementById('closing-status'); if(!box) return;
+  if(state.submitted){
+    box.innerHTML = `<h2>Sent! ✅</h2><p style="color:var(--sub);">Your answers have been saved and your teacher can see them on the Teacher Dashboard.</p>`;
+  }else{
+    box.innerHTML = `<h2>Hello, ${esc(state.name)}! 🎉</h2>
+      <p style="color:var(--sub);">You have completed the whole FRACTIO learning sequence. Press the button below to send your answers to your teacher.</p>
+      ${state.sendErr?`<div class="loginerr">${esc(state.sendErr)}</div>`:''}
+      <button class="btn block" id="send-btn" onclick="finishAndSend()">Send Answers to Teacher</button>`;
+  }
+}
+async function finishAndSend(){
+  const btn=document.getElementById('send-btn'); btn.disabled=true; btn.textContent='Sending...';
+  await submitAnswers();
+  drawClosingStatus();
+}
+
+/* ---------- Teacher Dashboard ---------- */
+function fmtDate(s){ try{ return new Date(s).toLocaleString('en-GB',{dateStyle:'medium', timeStyle:'short'}); }catch(e){ return s||''; } }
+
+function exportExcel(){
+  if(!dashRows.length){ alert('There is no data to export yet.'); return; }
+  const scores = dashRows.map(r=>r.quiz_score||0);
+  const avgQ = scores.reduce((a,b)=>a+b,0)/scores.length;
+  const avgC = dashRows.reduce((a,r)=>a+(r.challenge_points||0),0)/dashRows.length;
+  const fileName = 'FRACTIO_Student_Results_'+new Date().toISOString().slice(0,10);
+  const data = dashRows.map((r,i)=>({
+    "No": i+1,
+    "Name": r.name||'',
+    "Class": r.class||'',
+    "Quiz Score": r.quiz_score!=null?r.quiz_score:'',
+    "Challenge Points": r.challenge_points!=null?r.challenge_points:'',
+    "Reflection 1 (What new thing did you learn?)": r.reflect1||'',
+    "Reflection 2 (Which activity helped the most?)": r.reflect2||'',
+    "Reflection 3 (Which part is still difficult?)": r.reflect3||'',
+    "Submitted At": fmtDate(r.created_at)
+  }));
+  if(typeof XLSX==='undefined'){
+    // Fallback: CSV (opens in Excel) if the Excel library could not be loaded
+    const cols=Object.keys(data[0]);
+    const csv=[cols.join(',')].concat(data.map(row=>cols.map(c=>'"'+String(row[c]).replace(/"/g,'""')+'"').join(','))).join('\r\n');
+    const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fileName+'.csv'; document.body.appendChild(a); a.click(); a.remove();
+    return;
+  }
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(data);
+  ws['!cols']=[{wch:5},{wch:22},{wch:10},{wch:12},{wch:16},{wch:40},{wch:40},{wch:40},{wch:20}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Student Results');
+  const summary=[
+    ["FRACTIO - Teacher Dashboard Summary"],
+    ["Exported on", new Date().toLocaleString('en-GB')],
+    [],
+    ["Students who submitted", dashRows.length],
+    ["Average quiz score", Math.round(avgQ*10)/10],
+    ["Average challenge points", Math.round(avgC*10)/10],
+    ["Highest quiz score", Math.max(...scores)],
+    ["Lowest quiz score", Math.min(...scores)],
+    [],
+    ["Score distribution","Students"],
+    ["80-100 (Very Good)", scores.filter(s=>s>=80).length],
+    ["60-79 (Developing)", scores.filter(s=>s>=60&&s<80).length],
+    ["< 60 (Needs Support)", scores.filter(s=>s<60).length]
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(summary);
+  ws2['!cols']=[{wch:32},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+  XLSX.writeFile(wb, fileName+'.xlsx');
+}
+
+async function renderTeacherDashboard(){
+  const view=document.getElementById('view');
+  view.innerHTML = `<div class="card" style="text-align:center; color:var(--sub);">Loading student data...</div>`;
+  let rows=[]; let failed=false;
+  try{
+    const res = await fetch(SUPABASE_URL+"/rest/v1/submissions?select=*&order=created_at.desc", {
+      headers:{ "apikey":SUPABASE_KEY, "Authorization":"Bearer "+SUPABASE_KEY }
+    });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    rows = await res.json();
+  }catch(e){ console.error("Failed to load data:", e); failed=true; }
+  if(failed){
+    view.innerHTML = `<div class="card"><span class="badge">Teacher Dashboard</span><h2>Student Activity Summary</h2>
+      <p style="color:var(--err); font-weight:700;">Could not load the data. Please check your internet connection and try again.</p>
+      <button class="btn" onclick="renderTeacherDashboard()">Try Again</button></div>`;
+    return;
+  }
+  dashRows = Array.isArray(rows)?rows:[];
+  if(dashRows.length===0){
+    view.innerHTML = `<div class="card"><span class="badge">Teacher Dashboard</span><h2>Student Activity Summary</h2>
+      <p style="color:var(--sub);">No students have submitted answers yet. Data will appear here once a student finishes FRACTIO and presses "Send Answers to Teacher".</p>
+      <button class="btn secondary" onclick="renderTeacherDashboard()">Refresh</button></div>`;
+    return;
+  }
+  const scores = dashRows.map(r=>r.quiz_score||0);
+  const avg = Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+  const avgC = Math.round(dashRows.reduce((a,r)=>a+(r.challenge_points||0),0)/dashRows.length);
+  const vg = scores.filter(s=>s>=80).length, dv = scores.filter(s=>s>=60&&s<80).length, ns = scores.filter(s=>s<60).length;
+  const pct = n=>Math.round(n/dashRows.length*100);
+  view.innerHTML = `<div class="card"><div class="dashhead"><div><span class="badge">Teacher Dashboard</span>
+    <h2 style="margin:0;">Student Activity Summary</h2></div>
+    <div class="dashactions"><button class="btn secondary" onclick="renderTeacherDashboard()">Refresh</button><button class="btn excel" onclick="exportExcel()">Export to Excel</button></div></div>
+    <div class="stat">
+      <div><b>${dashRows.length}</b><span>Students submitted</span></div>
+      <div><b>${avg}</b><span>Average quiz score</span></div>
+      <div><b>${avgC}</b><span>Average challenge points</span></div>
+    </div>
+    <div class="tablewrap"><table class="dash"><tr><th>Name</th><th>Class</th><th>Quiz Score</th><th>Challenge Points</th><th>Submitted</th></tr>
+    ${dashRows.map(r=>`<tr><td>${esc(r.name||'-')}</td><td>${esc(r.class||'-')}</td><td>${r.quiz_score!=null?esc(r.quiz_score):'-'}</td><td>${r.challenge_points!=null?esc(r.challenge_points):'-'}</td><td>${esc(fmtDate(r.created_at))}</td></tr>`).join('')}
+    </table></div>
+  </div>
+  <div class="card">
+    <h3>Score Distribution</h3>
+    ${[["80-100 · Very Good",vg],["60-79 · Developing",dv],["< 60 · Needs Support",ns]].map(x=>`<div style="margin-bottom:.6rem;"><div style="display:flex; justify-content:space-between; font-size:.82rem; font-weight:700;"><span>${x[0]}</span><span>${pct(x[1])}% (${x[1]})</span></div><div class="bar"><i style="width:${pct(x[1])}%;"></i></div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Quiz Score per Student</h3>
+    ${dashRows.map(r=>`<div style="margin-bottom:.6rem;"><div style="display:flex; justify-content:space-between; font-size:.82rem; font-weight:700;"><span>${esc(r.name||'-')}</span><span>${esc(r.quiz_score||0)}</span></div><div class="bar"><i style="width:${Math.min(r.quiz_score||0,100)}%;"></i></div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h3>Student Reflections</h3>
+    ${dashRows.map(r=>`<div style="margin-bottom:.8rem; padding-bottom:.6rem; border-bottom:1px solid var(--purple-l);"><b>${esc(r.name||'-')}</b>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">New thing learned: ${esc(r.reflect1||'-')}</p>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">Most helpful: ${esc(r.reflect2||'-')}</p>
+      <p style="font-size:.85rem; color:var(--sub); margin:.2rem 0 0;">Still difficult: ${esc(r.reflect3||'-')}</p></div>`).join('')}
+  </div>`;
+}
+
+function renderShell(showProgress){
+  const app=document.getElementById('app');
+  app.className = showProgress ? 'wrap' : 'wrap wide';
+  app.innerHTML = `<header class="top">
+    <div class="brandbar"><div class="logo">F</div><b>FRACTIO</b>
+      <div class="userchip"><div class="av">${esc(state.name.charAt(0).toUpperCase())}</div>
+        <span style="font-size:.8rem; font-weight:700;">${esc(state.name)} ${state.role==='teacher'?'(Teacher)':''}</span>
+        <button class="logoutbtn" onclick="logout()">Sign out</button></div>
+    </div>
+    ${showProgress ? '<div class="progress" id="progress"></div><div class="steplabel" id="steplabel"></div>' : '<div class="steplabel">Teacher Dashboard</div>'}
+  </header>
+  <main id="view"></main>`;
+}
+function render(){
+  if(!state.loggedIn){ renderLogin(); return; }
+  if(state.role==='teacher'){ renderShell(false); renderTeacherDashboard(); return; }
+  renderShell(true); renderProgress(); views();
+}
+render();
+</script>
+</body>
+</html>
